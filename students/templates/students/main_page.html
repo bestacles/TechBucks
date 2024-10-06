@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Main Dashboard - TechBucks{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar for Filters -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky">
+                <h4><i class="bi bi-funnel-fill"></i> Filters</h4>
+                <form method="get" action="">
+                    <label for="grade">Grade:</label>
+                    <select name="grade" id="grade" class="form-select mb-2" onchange="this.form.submit()">
+                        <option value="">All Grades</option>
+                        {% for g in grades %}
+<option value="{{ g }}" {% if request.GET.grade == g %}selected{% endif %}>Grade {{ g }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="homeroom">Homeroom:</label>
+                    <select name="homeroom" id="homeroom" class="form-select mb-2" onchange="this.form.submit()">
+                        <option value="">All Homerooms</option>
+                        {% for h in homerooms %}
+                        <option value="{{ h }}" {% if request.GET.homeroom == h %}selected{% endif %}>{{ h }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="teacher">Teacher:</label>
+                    <select name="teacher" id="teacher" class="form-select mb-2" onchange="this.form.submit()">
+                        <option value="">All Teachers</option>
+                        {% for t in teachers %}
+                        <option value="{{ t }}" {% if request.GET.teacher == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </nav>
+
+        <!-- Main Dashboard Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Dashboard Overview with Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Classes</h5>
+                            <p class="card-text">{{ classes_with_totals.count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Students</h5>
+                            <p class="card-text">{{ students.count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total TechBucks</h5>
+                            <p class="card-text">{{ total_techbucks }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classes Table -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-house-door-fill"></i> Classes</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" id="classSearch" class="form-control" placeholder="Search Classes...">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="classTable" class="table table-striped table-hover table-bordered student-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Homeroom</th>
+                                <th>Teacher</th>
+                                <th>Total TechBucks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for class in classes_with_totals %}
+                            <tr>
+                                <td>{{ class.homeroom }}</td>
+                                <td>{{ class.homeroom_teacher }}</td>
+                                <td>
+                                    {% with total_techbucks=class.total_techbucks %}
+                                    <span class="techbucks-badge {% if total_techbucks >= 0 %}positive-badge{% else %}negative-badge{% endif %}">
+                                        {{ total_techbucks|default:0 }}
+                                    </span>
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'students:class_profile' class.homeroom %}" class="btn btn-info btn-sm">
+                                        <i class="bi bi-eye-fill"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-people-fill"></i> Students</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" id="studentSearch" class="form-control" placeholder="Search Students...">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="studentTable" class="table table-striped table-hover table-bordered student-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Photo</th>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Grade</th>
+                                <th>Homeroom</th>
+                                <th>Teacher</th>
+                                <th>TechBucks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>
+                                   <!-- This is a placeholder for if we add an avatar picture to their profie <img src="{% if student.photo %}{{ student.photo.url }}{% else %}https://via.placeholder.com/50{% endif %}" alt="{{ student.first_name }}" class="img-thumbnail" style="max-width: 50px;"> -->
+                                    <img src="{{ student.qr_code.url }}" alt="QR Code" class="img-thumbnail" style="max-width: 100px;">
+                                </td>
+                                <td>{{ student.student_id }}</td>
+                                <td>{{ student.first_name }} {{ student.last_name|slice:":1" }}.</td>
+                                <td>{{ student.grade }}</td>
+                                <td>{{ student.homeroom }}</td>
+                                <td>{{ student.homeroom_teacher }}</td>
+                                <td>
+                                    {% with total_techbucks=student.total_techbucks %}
+                <span class="badge {% if student.total_techbucks >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ student.total_techbucks }}
+                </span>
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'students:student_profile' student.student_id %}" class="btn btn-info btn-sm">
+                                        <i class="bi bi-eye-fill"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize DataTables for Classes Table
+        var classTable = $('#classTable').DataTable({
+            "paging": true,
+            "ordering": true,
+            "searching": true,
+            "info": true,
+            "columnDefs": [
+                { "orderable": true, "targets": [0, 1, 2] },
+                { "orderable": false, "targets": [3] }
+            ]
+        });
+
+        // Initialize DataTables for Students Table
+        var studentTable = $('#studentTable').DataTable({
+            "paging": true,
+            "ordering": true,
+            "searching": true,
+            "info": true,
+            "columnDefs": [
+                { "orderable": false, "targets": [0, 7] }
+            ]
+        });
+
+        // Apply search for class table
+        $('#classSearch').on('keyup', function () {
+            classTable.search(this.value).draw();
+        });
+
+        // Apply search for student table
+        $('#studentSearch').on('keyup', function () {
+            studentTable.search(this.value).draw();
+        });
+    });
+</script>
+{% endblock %}

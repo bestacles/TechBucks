@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Profile - TechBucks{% endblock %}
+
+{% block content %}
+<p>Is Teacher: {{ is_teacher }}</p>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Total Student TechBucks Card -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <!-- Dynamic background color for TechBucks total -->
+                <div class="card-header text-white text-center
+                    {% if total_techbucks >= 0 %}
+                        bg-success
+                    {% else %}
+                        bg-danger
+                    {% endif %}
+                ">
+                    <h4><i class="bi bi-coin"></i> {{ student.first_name }}'s TechBucks</h4>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Badge for TechBucks amount -->
+                    <span class="badge {% if total_techbucks >= 0 %}bg-success{% else %}bg-danger{% endif %} text-light" style="font-size: 1.5rem;">{{ total_techbucks|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Details Card -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="bi bi-person-circle"></i> {{ student.first_name }} {{ student.last_name|slice:":1" }}.</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p><strong>Student ID:</strong> {{ student.student_id }}</p>
+                    <p><strong>Grade:</strong> {{ student.grade }}</p>
+                    <p><strong>Homeroom:</strong> {{ student.homeroom }}</p>
+                    <a href="{% url 'students:class_profile' student.homeroom %}" class="btn btn-info">
+                        <i class="bi bi-house-door-fill"></i> View Class {{ student.homeroom }}
+                    </a>
+                    <br><br>
+
+<!-- Conditionally display Add/Deduct Points button only for Teachers -->
+{% if is_teacher %}
+    <a href="{% url 'students:add_transaction' student.student_id %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add/Deduct Points
+    </a>
+{% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student QR Code Card -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center">
+                    <h4><i class="bi bi-qr-code"></i> Student QR Code</h4>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ student.qr_code.url }}" alt="Student QR Code" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Student TechBucks Section (only for Teachers) -->
+{% if is_teacher %}
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white text-center">
+                <h4><i class="bi bi-piggy-bank-fill"></i> Manage TechBucks</h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Add Points</h5>
+                        <div class="btn-group-vertical">
+                            {% for amount in amounts %}
+                                <button class="btn btn-success m-1" data-bs-toggle="modal" data-bs-target="#modifyPointsModal" data-points="{{ amount }}">+{{ amount }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Deduct Points</h5>
+                        <div class="btn-group-vertical">
+                            {% for amount in amounts %}
+                                <button class="btn btn-danger m-1" data-bs-toggle="modal" data-bs-target="#modifyPointsModal" data-points="-{{ amount }}">-{{ amount }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+    </div>
+
+<!-- Transaction History Section -->
+<div class="card mt-4">
+    <div class="card-header bg-success text-white">
+        <h4><i class="bi bi-journal-text"></i> Transaction History</h4>
+    </div>
+    <div class="card-body">
+        <table id="transactionTable" class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Performed By</th>  <!-- New column for teacher/user who performed the transaction -->
+                </tr>
+            </thead>
+            <tbody>
+    {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ transaction.description }}</td>  <!-- Display the description -->
+            <td>
+                {% if transaction.amount > 0 %}
+                    <span class="text-success">+{{ transaction.amount }}</span>
+                {% else %}
+                    <span class="text-danger">{{ transaction.amount }}</span>
+                {% endif %}
+            </td>
+            <td>{{ transaction.performed_by.username|default:"Unknown" }}</td>  <!-- Display the teacher's username or 'Unknown' -->
+        </tr>
+    {% endfor %}
+</tbody>
+
+        </table>
+    </div>
+</div>
+
+
+<!-- Modal for adding/deducting points -->
+<div class="modal fade" id="modifyPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modify TechBucks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'students:update_points' student.student_id %}">
+    {% csrf_token %}
+    <div class="modal-body">
+        <input type="hidden" id="modalPointsInput" name="points" value="">
+        <p>Are you sure you want to modify <strong><span id="modalPointsText"></span> TechBucks</strong>?</p>
+
+        <!-- Optional description input for transaction -->
+        <div class="mb-3">
+            <label for="transactionDescription" class="form-label">Description (optional):</label>
+            <input type="text" class="form-control" id="transactionDescription" name="description" maxlength="255">
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Confirm</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#transactionTable').DataTable({
+            "order": [[0, "desc"]]
+        });
+
+        $('#modifyPointsModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var points = button.data('points');
+            $('#modalPointsInput').val(points);
+            $('#modalPointsText').text(Math.abs(points));
+        });
+    });
+</script>
+{% endblock %}

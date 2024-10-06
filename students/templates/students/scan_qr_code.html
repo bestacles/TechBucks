@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan QR Code - TechBucks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scan-container {
+        text-align: center;
+        padding-top: 100px;
+    }
+    .scan-icon {
+        font-size: 5em;
+        color: #007bff;
+    }
+    .scan-instruction {
+        font-size: 1.5em;
+        margin-top: 20px;
+    }
+    .scan-form {
+        margin-top: 40px;
+    }
+    .scan-button {
+        font-size: 1.2em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container scan-container">
+    <i class="bi bi-qr-code-scan scan-icon"></i>
+    <div class="scan-instruction">Scan Student QR Code</div>
+
+    <!-- Scan Form -->
+    <form method="get" class="scan-form">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="Enter Student ID" name="student_id" required>
+            <button class="btn btn-primary scan-button" type="submit">Go</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

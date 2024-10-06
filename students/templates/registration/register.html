@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - TechBucks{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create an Account</h2>
+<form method="post" action="{% url 'register' %}">
+    {% csrf_token %}
+
+    <!-- Display form fields -->
+    {{ form.as_p }}
+
+    <!-- Display form errors (important!) -->
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for field in form %}
+                    {% if field.errors %}
+                        <li>{{ field.label }}: {{ field.errors }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <button type="submit">Register</button>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Transaction{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Transaction for {{ student.first_name }} {{ student.last_name|slice:":1" }}.</h2>
+<p>User: {{ user.username }}</p>
+
+    {% if user.is_authenticated %}
+        <!-- Transaction Form -->
+        <form id="transactionForm" method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" class="form-control" id="amount" name="amount" required>
+            </div>
+
+            <!-- Quick Add/Deduct Buttons -->
+            <div class="quick-buttons mb-3">
+                <h5>Quick Add/Deduct Amounts:</h5>
+                <button type="button" class="btn btn-success quick-amount" data-value="5">+5</button>
+                <button type="button" class="btn btn-success quick-amount" data-value="10">+10</button>
+                <button type="button" class="btn btn-success quick-amount" data-value="25">+25</button>
+                <button type="button" class="btn btn-danger quick-amount" data-value="-5">-5</button>
+                <button type="button" class="btn btn-danger quick-amount" data-value="-10">-10</button>
+                <button type="button" class="btn btn-danger quick-amount" data-value="-25">-25</button>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (optional)</label>
+                <input type="text" class="form-control" id="description" name="description" maxlength="255">
+            </div>
+
+            <!-- Add to Class Checkbox -->
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="isClassTransaction" name="is_class_transaction">
+                <label class="form-check-label" for="isClassTransaction">Apply to entire class</label>
+            </div>
+
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmModal">Submit</button>
+        </form>
+
+        <!-- Confirmation Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Transaction</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to <strong><span id="actionText"></span></strong> <strong><span id="pointsValue"></span></strong> TechBucks?</p>
+                        <p id="classApplyText" style="display:none;">This will apply to the entire class.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="confirmSubmit" class="btn btn-primary">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="alert alert-warning">You need to be logged in to add transactions. <a href="{% url 'login' %}">Log in here</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Quick Add/Deduct Button Functionality
+    document.querySelectorAll('.quick-amount').forEach(button => {
+        button.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            const amountField = document.getElementById('amount');
+
+            // Update the amount field with the selected quick button value
+            amountField.value = parseInt(amountField.value || 0) + parseInt(value);
+        });
+    });
+
+    // Confirmation modal logic
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmSubmit = document.getElementById('confirmSubmit');
+    const amountField = document.getElementById('amount');
+    const actionText = document.getElementById('actionText');
+    const pointsValue = document.getElementById('pointsValue');
+    const classApplyText = document.getElementById('classApplyText');
+    const isClassTransaction = document.getElementById('isClassTransaction');
+
+    confirmModal.addEventListener('show.bs.modal', function () {
+        const pointsAmount = amountField.value || 0;
+        const action = pointsAmount > 0 ? 'add' : 'deduct';
+
+        actionText.textContent = action;
+        pointsValue.textContent = Math.abs(pointsAmount);
+
+        if (isClassTransaction.checked) {
+            classApplyText.style.display = 'block';
+        } else {
+            classApplyText.style.display = 'none';
+        }
+    });
+
+    confirmSubmit.addEventListener('click', function () {
+        // Submit the form after confirmation
+        document.getElementById('transactionForm').submit();
+    });
+</script>
+{% endblock %}

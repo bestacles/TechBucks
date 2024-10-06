@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deduct Points for {{ student.first_name }} {{ student.last_name }}</title>
+</head>
+<body>
+    <h1>Deduct Points for {{ student.first_name }} {{ student.last_name }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="points">Points to Deduct:</label>
+        <input type="number" name="points" id="points" required>
+
+        <label for="description">Description:</label>
+        <input type="text" name="description" id="description" placeholder="Reason for deducting points">
+
+        <button type="submit">Deduct Points</button>
+    </form>
+</body>
+</html>

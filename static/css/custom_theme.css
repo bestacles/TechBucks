@@ -1,0 +1,255 @@
+/* Define Color Palette Based on Vipers Logo */
+:root {
+    --primary-color: #00b4ff; /* Light blue from the logo */
+    --secondary-color: #002b4c; /* Dark blue from the logo */
+    --gray-color: #4a4a4a; /* Gray color */
+    --white-color: #ffffff; /* White color */
+    --black-color: #000000; /* Black color */
+    --green-color: #28a745; /* Green for Add Points */
+    --red-color: #dc3545; /* Red for Deduct Points */
+}
+
+/* Typography */
+/* Container for background image */
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1rem;
+    color: var(--black-color);
+    position: relative;
+    z-index: 1;
+    background-color: var(--white-color); /* Base background color */
+}
+
+/* Background image with fixed size and opacity */
+body::before {
+    content: "";
+    background: url('/static/images/school_logo.png') no-repeat center center;
+    background-size: 55%; /* Make sure the image covers the entire page */
+    opacity: 0.3; /* Set the image opacity */
+    position: fixed; /* Fixed position to keep it consistent across pages */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Behind the content */
+    pointer-events: none; /* Prevent interaction with the image */
+}
+
+
+/* Navbar Customization */
+.navbar {
+    background-color: var(--secondary-color); /* Dark blue navbar */
+    padding: 15px 0; /* Add padding to give it more spacing */
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: var(--white-color) !important; /* Ensure the text is white */
+    font-weight: bold; /* Bold text for readability */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Text shadow for better contrast */
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--primary-color) !important; /* Light blue hover effect */
+    text-shadow: none; /* Remove shadow on hover for a cleaner effect */
+}
+
+/* Buttons */
+.btn {
+    border-radius: 5px;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold; /* Make button text bold */
+    font-size: 1rem; /* Increase button font size */
+    color: var(--white-color); /* Ensure white text for readability */
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0094cc;  /* Slightly darker shade on hover */
+    transform: scale(1.08); /* Smooth scaling on hover */
+}
+
+/* Ensure Add/Deduct Points always have green/red */
+.btn-success {
+    background-color: var(--green-color) !important; /* Always green */
+    border-color: var(--green-color);
+}
+
+.btn-success:hover {
+    background-color: #218838; /* Darker green on hover */
+    transform: scale(1.08); /* Smooth scaling */
+}
+
+.btn-danger {
+    background-color: var(--red-color) !important; /* Always red */
+    border-color: var(--red-color);
+}
+
+.btn-danger:hover {
+    background-color: #c82333; /* Darker red on hover */
+    transform: scale(1.08); /* Smooth scaling */
+}
+
+/* Info buttons */
+.btn-info {
+    background-color: var(--secondary-color);
+}
+
+.btn-info:hover {
+    background-color: #138496; /* Slightly darker blue on hover */
+    transform: scale(1.08); /* Smooth scaling */
+}
+
+/* Cards */
+.card {
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Lift the card on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+}
+
+.card-header {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+}
+
+/* TechBucks Badges - Ensure success (green) and danger (red) */
+.badge {
+    font-size: 1.2rem;
+    padding: 0.5em 1em;
+}
+
+.bg-success {
+    background-color: var(--green-color) !important; /* Always green for positive balance */
+}
+
+.bg-danger {
+    background-color: var(--red-color) !important; /* Always red for negative balance */
+}
+
+/* Info badges */
+.bg-info {
+    background-color: var(--primary-color) !important;
+}
+
+/* Tables */
+.table th {
+    background-color: var(--secondary-color);
+    color: var(--white-color);
+    text-align: center;
+    font-weight: bold;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #e9ecef;
+    transition: background-color 0.3s ease; /* Smooth hover animation */
+}
+
+/* Modal Fixes */
+.modal-backdrop {
+    z-index: 1040 !important;
+    background-color: rgba(0, 0, 0, 0.5); /* Slight transparency for the backdrop */
+}
+
+.modal {
+    z-index: 1060 !important; /* Ensure modal is above the backdrop */
+}
+
+.modal-dialog {
+    z-index: 1065;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    transform: translateY(-10%);
+    opacity: 0;
+    pointer-events: auto; /* Ensure modal is clickable */
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0);
+    opacity: 1;
+    margin-top: 10vh; /* Centers modal with some margin */
+}
+
+.modal.fade .modal-content {
+    z-index: 1065;
+}
+
+/* Modal header customization */
+.modal-header {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+}
+
+/* Ensure modals are fully clickable */
+body.modal-open {
+    overflow: hidden; /* Disable scrolling when modal is open */
+}
+
+.modal-open .modal {
+    pointer-events: auto; /* Ensure modals remain interactive */
+}
+
+/* Footer Customization */
+footer {
+    background-color: #343a40;
+    color: #ffffff;
+    padding: 20px 0;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+    .navbar {
+        font-size: 0.9rem;
+    }
+
+    .card {
+        margin-bottom: 1.5rem;
+    }
+
+    .table {
+        font-size: 0.85rem;
+    }
+}
+
+/* Page Fade In/Out */
+
+
+/* Button Hover Animations */
+.btn {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+    transform: scale(1.08);  /* Smooth button enlargement on hover */
+}
+
+.btn-primary:hover {
+    background-color: #0094cc; /* Darker blue shade */
+}
+
+.btn-success:hover {
+    background-color: #218838; /* Darker green shade */
+}
+
+.btn-danger:hover {
+    background-color: #c82333; /* Darker red shade */
+}
+
+/* Enhancing hover effects */
+.table-hover tbody tr:hover {
+    background-color: #dfeffc; /* Slightly brighter hover color */
+    transition: background-color 0.3s ease;
+}

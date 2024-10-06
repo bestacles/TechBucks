@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Points for {{ student.first_name }} {{ student.last_name }}</title>
+</head>
+<body>
+    <h1>Add Points for {{ student.first_name }} {{ student.last_name }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="points">Points to Add:</label>
+        <input type="number" name="points" id="points" required>
+
+        <label for="description">Description:</label>
+        <input type="text" name="description" id="description" placeholder="Reason for adding points">
+
+        <button type="submit">Add Points</button>
+    </form>
+</body>
+</html>
