@@ -2,6 +2,9 @@
 
 from django.urls import path
 from . import views
+from rewards import views as reward_views
+from rewards import views as rewards_views
+
 
 app_name = 'students'
 
@@ -18,4 +21,7 @@ urlpatterns = [
     path('update_class_points/<homeroom>/', views.update_class_points, name='update_class_points'),
     path('<int:student_id>/', views.student_profile, name='student_profile'),
     path('add_transaction/<int:student_id>/', views.add_transaction, name='add_transaction'),  # Add transaction
+    path('<int:student_id>/', views.student_profile, name='student_profile'),  # Ensure this is correct
+    path('redeem/<str:student_id>/<int:reward_id>/', reward_views.redeem_reward, name='redeem_reward'),  # Updated this line
+
 ]

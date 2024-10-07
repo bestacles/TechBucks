@@ -1,3 +1,4 @@
+import logging  # Import the logging module
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .models import Student
@@ -11,10 +12,12 @@ from transactions.forms import TransactionForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
-
-
-from django.contrib.auth.forms import UserCreationForm
+from rewards.models import Reward
+from transactions.models import Transaction
+from django.contrib.auth.forms import UserCreationForm, logger
 from django.contrib.auth import login
+from django.contrib import messages
+
 
 # Helper function to check if the user is a teacher
 def is_teacher(user):
@@ -63,6 +66,12 @@ def main_page(request):
         'classes_with_totals': classes_with_totals,
     })
 
+from django.db.models import Sum
+from django.shortcuts import render, get_object_or_404
+from .models import Student
+from transactions.models import Transaction  # Assuming you track transactions
+from rewards.models import Reward
+
 def student_profile(request, student_id):
     # Fetch student information
     student = get_object_or_404(Student, student_id=str(student_id))
@@ -79,12 +88,15 @@ def student_profile(request, student_id):
     # Check if the user is a teacher
     is_teacher = request.user.groups.filter(name='Teacher').exists()
 
+    logger.debug(f"Rendering student profile for student ID: {student.id}")
+
     context = {
         'student': student,
         'transactions': transactions,
         'total_techbucks': total_techbucks,
         'amounts': amounts,  # Include the amounts list in the context
         'is_teacher': is_teacher,  # Pass whether the user is a teacher
+        'rewards': Reward.objects.all(),  # Pass the rewards to the template
 
     }
 
@@ -157,21 +169,25 @@ def update_points_for_class(request, homeroom, points):
 
 
 def update_points(request, student_id):
-    student = get_object_or_404(Student, student_id=student_id)
     if request.method == 'POST':
+        student = get_object_or_404(Student, student_id=str(student_id))
         points = int(request.POST.get('points', 0))
-        description = request.POST.get('description', 'Point update')  # Get the description, default to 'Point update'
+        description = request.POST.get('description', 'Points update')
 
-        # Create a new transaction with the description
+        # Create a new transaction
         Transaction.objects.create(
             student=student,
-            amount=points,
-            description=description,  # Save the description entered by the user
-            performed_by=request.user  # Track the teacher who performed the transaction
+            amount=points,  # This will be negative for deductions
+            description=description,
+            performed_by=request.user
         )
 
-        return redirect('students:student_profile', student_id=student_id)
-    return render(request, 'students/student_profile.html', {'student': student})
+        # Update the student's total TechBucks
+        #student.techbucks += points
+       # student.save()
+
+        messages.success(request, f"{'Added' if points > 0 else 'Deducted'} {abs(points)} TechBucks.")
+        return redirect('students:student_profile', student_id=student.student_id)
 
 
 def class_profile(request, homeroom):

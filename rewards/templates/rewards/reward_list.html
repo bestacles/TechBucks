@@ -6,22 +6,23 @@
 <form method="get">
     <label for="sort">Sort by:</label>
     <select name="sort" id="sort" onchange="this.form.submit()">
-        <option value="name">Name</option>
-        <option value="cost">Cost</option>
-        <option value="category">Category</option>
+        <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>Name</option>
+        <option value="cost" {% if request.GET.sort == "cost" %}selected{% endif %}>Cost</option>
+        <option value="category" {% if request.GET.sort == "category" %}selected{% endif %}>Category</option>
     </select>
 </form>
 
 <div class="rewards-list">
-    {% for reward in rewards %}
-    <div class="reward-item">
-        <h3>{{ reward.name }} ({{ reward.cost }} points)</h3>
-        <p>{{ reward.description }}</p>
-        <p>Category: {{ reward.category }}</p>
-        <img src="{{ reward.qr_code.url }}" alt="QR Code for {{ reward.name }}">
-        <p>Reward ID: {{ reward.unique_id }}</p>
-        <a href="{% url 'rewards:redeem_reward' reward.id %}" class="btn btn-primary">Redeem</a>
-    </div>
-    {% endfor %}
+{% for reward in rewards %}
+  <div>
+    <h2>{{ reward.name }}</h2>
+    <p>{{ reward.description }}</p>
+    <p>Cost: {{ reward.cost }} TechBucks</p>
+    <img src="{{ reward.qr_code.url }}" alt="QR Code">
+
+    <!-- Assuming the student ID is available in the context as 'student.id' -->
+    <a href="{% url 'rewards:redeem_reward' student.id reward.id %}">Redeem</a>
+  </div>
+{% endfor %}
 </div>
 {% endblock %}

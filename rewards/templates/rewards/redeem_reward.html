@@ -3,15 +3,15 @@
 {% block content %}
   <h2>Redeem Reward: {{ reward.name }}</h2>
   <p>{{ reward.description }}</p>
-  <p>Points Required: {{ reward.points_required }}</p>
-  <p>Your Total Points: {{ user.student.total_techbucks }}</p>
+  <p>Points Required: {{ reward.cost }}</p>
+  <p>Your Total TechBucks: {{ user.student.techbucks }}</p>
 
-  {% if user.student.total_techbucks >= reward.points_required %}
+  {% if user.student.techbucks >= reward.cost %}
     <form method="post">
       {% csrf_token %}
-      <button type="submit">Confirm Redemption</button>
+      <button type="submit" class="btn btn-primary">Confirm Redemption</button>
     </form>
   {% else %}
-    <p class="alert alert-danger">You do not have enough points to redeem this reward.</p>
+    <p class="alert alert-danger">You do not have enough TechBucks to redeem this reward.</p>
   {% endif %}
 {% endblock %}

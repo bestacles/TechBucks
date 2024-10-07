@@ -1,59 +1,137 @@
+import logging  # Import the logging module
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Reward, Redemption
-from students.models import Student  # Assuming you track points through Student
 from django.contrib import messages
-from django.db import transaction  # For atomic operations
-from django.core.exceptions import ObjectDoesNotExist
+from openpyxl import load_workbook  # For handling XLSX files
+from .models import Reward, Redemption
+from students.models import Student
+from .forms import XLSXUploadForm
+from django.db import transaction
 
-# View to handle reward redemption
-@transaction.atomic  # Ensures all operations are successful or none are
-def redeem_reward(request, reward_id):
-    try:
-        student = request.user.student  # Attempt to retrieve the student object
-    except ObjectDoesNotExist:
-        # Handle case where the user does not have an associated student
-        messages.error(request, "You do not have an associated student profile.")
-        return redirect('rewards:error_page')  # Redirect to error page
+# Create logger
+logger = logging.getLogger(__name__)
 
-    # Proceed with reward redemption logic
-    reward = get_object_or_404(Reward, id=reward_id)
-
-    if student.points >= reward.cost:
-        student.points -= reward.cost
-        student.save()
-
-        # Log the redemption
-        Redemption.objects.create(student=student, reward=reward)
-        messages.success(request, f"Successfully redeemed {reward.name}!")
-    else:
-        messages.error(request, "You do not have enough points to redeem this reward.")
-
-    return redirect('rewards:reward_list')
-
-
-from django.shortcuts import render
-from .models import Reward
+# View to handle reward creation via form
 def create_reward(request):
     if request.method == 'POST':
-        # Process your reward form here
-        reward = Reward.objects.create(
-            name=request.POST['name'],
-            description=request.POST['description'],
-            cost=request.POST['cost']
-        )
-        reward.generate_qr_code()  # Call to generate and save QR code
+        try:
+            reward = Reward.objects.create(
+                name=request.POST['name'],
+                description=request.POST['description'],
+                cost=request.POST['cost']
+            )
+            reward.generate_qr_code()  # Call to generate and save QR code
 
-        messages.success(request, "Reward created successfully!")
-        return redirect('rewards:reward_list')
+            messages.success(request, "Reward created successfully!")
+            return redirect('rewards:reward_list')
+        except Exception as e:
+            logger.error(f"Error creating reward: {str(e)}")
+            messages.error(request, f"Error creating reward: {str(e)}")
+            return redirect('rewards:error_page')
     return render(request, 'rewards/reward_form.html')
 
 
+# View to list rewards with optional sorting
 def reward_list(request):
-    rewards = Reward.objects.all()
-    return render(request, 'rewards/reward_list.html', {'rewards': rewards})
+    try:
+        sort_by = request.GET.get('sort', 'name')  # Default sort by name
+        rewards = Reward.objects.all().order_by(sort_by)
+        return render(request, 'rewards/reward_list.html', {'rewards': rewards})
+    except Exception as e:
+        logger.error(f"Error listing rewards: {str(e)}")
+        messages.error(request, f"Error listing rewards: {str(e)}")
+        return redirect('rewards:error_page')
 
 
+# View to handle XLSX file upload and adding rewards
+def add_reward_view(request):
+    if request.method == 'POST':
+        form = XLSXUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            xlsx_file = request.FILES['xlsx_file']
 
-# Error page view
+            try:
+                logger.info(f"Attempting to load XLSX file: {xlsx_file.name}")
+                workbook = load_workbook(xlsx_file)
+                sheet = workbook.active
+
+                logger.info(f"Workbook loaded successfully. Processing sheet...")
+                for row in sheet.iter_rows(min_row=2, values_only=True):  # Skip header row
+                    logger.info(f"Processing row: {row}")
+                    Reward.objects.create(
+                        name=row[0],
+                        description=row[1],
+                        cost=int(row[2]),
+                        category=row[3]
+                    )
+                    logger.info(f"Reward {row[0]} added successfully.")
+
+                messages.success(request, "Rewards added successfully!")
+                return redirect('rewards:reward_list')
+
+            except Exception as e:
+                logger.error(f"Error processing XLSX file: {str(e)}")
+                messages.error(request, f"Error processing XLSX file: {str(e)}")
+                return redirect('rewards:error_page')
+
+    else:
+        form = XLSXUploadForm()
+
+    return render(request, 'rewards/add_reward.html', {'form': form})
+
+
+# View to handle reward redemption
+from transactions.models import Transaction  # Import the Transaction model if you haven't already
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from transactions.models import Transaction
+from .models import Reward, Redemption
+from students.models import Student
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@transaction.atomic
+def redeem_reward(request, student_id, reward_id):
+    student = get_object_or_404(Student, student_id=str(student_id))
+    reward = get_object_or_404(Reward, id=reward_id)
+
+    logger.debug(f"Redeeming reward for student {student.student_id}, reward {reward.id}")
+
+    if request.method == 'POST':
+        logger.debug(f"Student TechBucks before transaction: {student.techbucks}, Reward cost: {reward.cost}")
+
+        # Check if student has enough TechBucks
+        if student.techbucks >= reward.cost:
+            # Create a transaction to deduct TechBucks
+            Transaction.objects.create(
+                student=student,
+                amount=-reward.cost,  # Deduct reward cost
+                description=f"Redeemed {reward.name}",
+                performed_by=request.user  # Track the user who performed the transaction
+            )
+
+            # Create a Redemption entry
+            Redemption.objects.create(student=student, reward=reward)
+
+            # Success message
+            messages.success(request, f"Successfully redeemed {reward.name} for {reward.cost} TechBucks!")
+            logger.debug(f"Student TechBucks after transaction: {student.techbucks - reward.cost}")
+            return redirect('students:student_profile', student_id=student.student_id)
+        else:
+            messages.error(request, "Not enough TechBucks to redeem this reward.")
+            logger.debug(f"Redemption failed. Not enough TechBucks: {student.techbucks}")
+            return redirect('students:student_profile', student_id=student.student_id)
+
+    return redirect('rewards:error_page')
+
+
+# Success page for reward actions
+def success(request):
+    return render(request, 'rewards/success.html')
+
+
+# Simple error page view
 def error_page(request):
     return render(request, 'rewards/error_page.html')  # Simple error page
