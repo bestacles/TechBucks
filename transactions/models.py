@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 class Transaction(models.Model):
     student = models.ForeignKey(Student, related_name='transactions', on_delete=models.CASCADE)
-    amount = models.IntegerField()
+    amount = models.BigIntegerField()
     description = models.CharField(max_length=255, null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_class_transaction = models.BooleanField(default=False)

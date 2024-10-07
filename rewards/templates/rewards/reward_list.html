@@ -1,28 +1,28 @@
+<!-- In rewards/reward_list.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Available Rewards</h2>
-
-<form method="get">
-    <label for="sort">Sort by:</label>
-    <select name="sort" id="sort" onchange="this.form.submit()">
-        <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>Name</option>
-        <option value="cost" {% if request.GET.sort == "cost" %}selected{% endif %}>Cost</option>
-        <option value="category" {% if request.GET.sort == "category" %}selected{% endif %}>Category</option>
-    </select>
-</form>
-
-<div class="rewards-list">
-{% for reward in rewards %}
-  <div>
-    <h2>{{ reward.name }}</h2>
-    <p>{{ reward.description }}</p>
-    <p>Cost: {{ reward.cost }} TechBucks</p>
-    <img src="{{ reward.qr_code.url }}" alt="QR Code">
-
-    <!-- Assuming the student ID is available in the context as 'student.id' -->
-    <a href="{% url 'rewards:redeem_reward' student.id reward.id %}">Redeem</a>
-  </div>
-{% endfor %}
-</div>
+<h1>Rewards List</h1>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Cost</th>
+        <th>Action</th>
+    </tr>
+    {% for reward in rewards %}
+    <tr>
+        <td>{{ reward.name }}</td>
+        <td>{{ reward.description }}</td>
+        <td>{{ reward.cost }}</td>
+        <td>
+            {% if student_id %}
+                <a href="{% url 'rewards:redeem_reward' student_id reward.id %}">Redeem</a>
+            {% else %}
+                <span>Login to Redeem</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}

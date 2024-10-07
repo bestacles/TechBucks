@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 import uuid
 from django.core.exceptions import ValidationError
 from students.models import Student
+from transactions.models import Transaction
 
 class Reward(models.Model):
     name = models.CharField(max_length=255)
@@ -67,21 +68,28 @@ class Reward(models.Model):
         return f"{self.name} ({self.unique_id})"
 
 class Redemption(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='redemptions')
-    reward = models.ForeignKey(Reward, on_delete=models.CASCADE)
-    redeemed_at = models.DateTimeField(auto_now_add=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    reward = models.ForeignKey('Reward', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Check if the student has enough TechBucks to redeem the reward
-        if self.student.techbucks < self.reward.cost:
-            raise ValidationError(f"{self.student.first_name} does not have enough TechBucks to redeem {self.reward.name}.")
+        # Remove transaction creation from here
+        # Instead, only perform validation if necessary
+        total_techbucks = self.student.total_techbucks()
+        reward_cost = self.reward.cost
 
-        # Deduct the TechBucks from the student's balance
-        self.student.techbucks -= self.reward.cost
-        self.student.save()
+        # Ensure values are integers for comparison
+        if not isinstance(total_techbucks, int):
+            total_techbucks = int(total_techbucks)
+        if not isinstance(reward_cost, int):
+            reward_cost = int(reward_cost)
 
-        # Save the redemption record
-        super().save(*args, **kwargs)
+        print(f"Total TechBucks: {total_techbucks}, Reward Cost: {reward_cost}")
+
+        if total_techbucks >= self.reward.cost:
+            super().save(*args, **kwargs)
+        else:
+            raise ValidationError("Not enough TechBucks to redeem this reward.")
 
     def __str__(self):
         return f"{self.student.first_name} redeemed {self.reward.name} on {self.redeemed_at}"

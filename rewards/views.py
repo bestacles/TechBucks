@@ -35,7 +35,23 @@ def reward_list(request):
     try:
         sort_by = request.GET.get('sort', 'name')  # Default sort by name
         rewards = Reward.objects.all().order_by(sort_by)
-        return render(request, 'rewards/reward_list.html', {'rewards': rewards})
+
+        # Retrieve the student_id from the request, session, or user profile
+        student_id = None
+
+        # Option 1: If the user is a student and associated with a Student model
+        if request.user.is_authenticated and hasattr(request.user, 'student'):
+            student_id = request.user.student.student_id
+
+        # Option 2: If student_id is passed via GET parameters or session
+        # student_id = request.GET.get('student_id') or request.session.get('student_id')
+
+        # Pass the student_id to the template
+        context = {
+            'rewards': rewards,
+            'student_id': student_id,
+        }
+        return render(request, 'rewards/reward_list.html', context)
     except Exception as e:
         logger.error(f"Error listing rewards: {str(e)}")
         messages.error(request, f"Error listing rewards: {str(e)}")
@@ -88,6 +104,17 @@ from transactions.models import Transaction
 from .models import Reward, Redemption
 from students.models import Student
 import logging
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Sum
+import logging
+
+from transactions.models import Transaction
+from .models import Reward, Redemption
+from students.models import Student
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -100,10 +127,13 @@ def redeem_reward(request, student_id, reward_id):
     logger.debug(f"Redeeming reward for student {student.student_id}, reward {reward.id}")
 
     if request.method == 'POST':
-        logger.debug(f"Student TechBucks before transaction: {student.techbucks}, Reward cost: {reward.cost}")
+        # Use the method to get total TechBucks
+        total_techbucks = student.total_techbucks()
+
+        logger.debug(f"Student TechBucks before transaction: {total_techbucks}, Reward cost: {reward.cost}")
 
         # Check if student has enough TechBucks
-        if student.techbucks >= reward.cost:
+        if total_techbucks >= reward.cost:
             # Create a transaction to deduct TechBucks
             Transaction.objects.create(
                 student=student,
@@ -117,11 +147,11 @@ def redeem_reward(request, student_id, reward_id):
 
             # Success message
             messages.success(request, f"Successfully redeemed {reward.name} for {reward.cost} TechBucks!")
-            logger.debug(f"Student TechBucks after transaction: {student.techbucks - reward.cost}")
+            logger.debug(f"Student TechBucks after transaction: {total_techbucks - reward.cost}")
             return redirect('students:student_profile', student_id=student.student_id)
         else:
             messages.error(request, "Not enough TechBucks to redeem this reward.")
-            logger.debug(f"Redemption failed. Not enough TechBucks: {student.techbucks}")
+            logger.debug(f"Redemption failed. Not enough TechBucks: {total_techbucks}")
             return redirect('students:student_profile', student_id=student.student_id)
 
     return redirect('rewards:error_page')

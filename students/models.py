@@ -48,5 +48,5 @@ class Student(models.Model):
 
     def total_techbucks(self):
         transactions = self.transactions.all()
-        total = transactions.aggregate(Sum('amount'))['amount__sum'] or 0
+        total = self.transactions.aggregate(total=Sum('amount'))['total'] or 0
         return total if total else 0
