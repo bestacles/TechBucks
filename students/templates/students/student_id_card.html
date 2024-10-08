@@ -1,0 +1,23 @@
+<!-- student_id_card.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student ID Card</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .card { width: 3.375in; height: 2.125in; border: 1px solid #000; padding: 10px; }
+        .logo { width: 50px; }
+        .qr-code { width: 50px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="{{ logo_url }}" alt="School Logo" class="logo">
+        <h2>{{ student.first_name }} {{ student.last_name }}</h2>
+        <p>ID: {{ student.student_id }}</p>
+        <p>Password: {{ user_password }}</p>
+        <img src="{{ qr_code_url }}" alt="QR Code" class="qr-code">
+    </div>
+</body>
+</html>

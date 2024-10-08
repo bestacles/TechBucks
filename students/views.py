@@ -17,7 +17,14 @@ from transactions.models import Transaction
 from django.contrib.auth.forms import UserCreationForm, logger
 from django.contrib.auth import login
 from django.contrib import messages
-
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML, CSS
+from .models import Student
+from django.conf import settings
+import os
+from tqdm import tqdm  # Import the tqdm progress bar
 
 # Helper function to check if the user is a teacher
 def is_teacher(user):
@@ -348,3 +355,60 @@ def class_list(request):
     }
 
     return render(request, 'students/class_list.html', context)
+
+
+def generate_student_id_cards(request):
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized", status=401)
+
+    # Fetch all students or apply filters as needed
+    students = Student.objects.all()
+
+    # Initialize tqdm progress bar
+    total_students = students.count()
+    pbar = tqdm(total=total_students, desc="Generating Student ID Cards", unit="student")
+
+    # Path to the school logo
+    logo_path = os.path.join(settings.STATIC_ROOT, 'images', 'school_logo.png')
+    logo_url = 'file://' + logo_path.replace('\\', '/')
+
+    # List to hold HTML content for each card
+    cards_html = []
+
+    for student in students:
+        # Path to the QR code
+        qr_code_path = os.path.join(settings.MEDIA_ROOT, student.qr_code.name)
+        qr_code_url = 'file://' + qr_code_path.replace('\\', '/')
+
+        # Prepare context for the template
+        context = {
+            'logo_url': logo_url,
+            'student': student,
+            'qr_code_url': qr_code_url,
+            'user': student.user,
+            'user_password': student.user.password_plaintext if hasattr(student.user, 'password_plaintext') else 'N/A',
+        }
+
+        # Render the HTML for the card
+        card_html = render_to_string('students/student_id_card.html', context)
+        cards_html.append(card_html)
+
+        # Update the progress bar for each student processed
+        pbar.update(1)
+
+    # Combine all card HTMLs into one HTML string with page breaks
+    final_html = "".join(card_html + '<div style="page-break-after: always;"></div>' for card_html in cards_html)
+
+    # Generate PDF
+    html = HTML(string=final_html)
+    css = CSS(string='''@page { size: 3.375in 2.125in; margin: 0; }''')
+    pdf = html.write_pdf(stylesheets=[css])
+
+    # Close the progress bar when finished
+    pbar.close()
+
+    # Return the PDF as a response
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="student_id_cards.pdf"'
+
+    return response

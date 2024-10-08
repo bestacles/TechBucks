@@ -23,5 +23,8 @@ urlpatterns = [
     path('add_transaction/<int:student_id>/', views.add_transaction, name='add_transaction'),  # Add transaction
     path('<int:student_id>/', views.student_profile, name='student_profile'),  # Ensure this is correct
     path('redeem/<str:student_id>/<int:reward_id>/', reward_views.redeem_reward, name='redeem_reward'),  # Updated this line
-
+    path('students/generate-id-cards/', views.generate_student_id_cards, name='generate_student_id_cards'),
+    path('pdf-status/', views.pdf_generation_status, name='pdf_generation_status'),
+    path('download-pdf/', views.download_pdf, name='download_pdf'),
+]
 ]
