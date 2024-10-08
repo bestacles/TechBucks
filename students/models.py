@@ -20,20 +20,20 @@ class Student(models.Model):
     qr_code = models.ImageField(upload_to='qr_codes/students/', null=True, blank=True)
     enrollment_status = models.BooleanField(default=True)  # Add this field
 
-    def generate_qr_code(self):
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(self.student_id)
-        qr.make(fit=True)
-        img = qr.make_image(fill='black', back_color='white')
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        img_file = File(buffer, name=f'{self.student_id}_qr.png')
-        self.qr_code.save(img_file.name, img_file, save=False)
+  # def generate_qr_code(self):
+      # qr = qrcode.QRCode(version=1, box_size=10, border=5)
+       #qr.add_data(self.student_id)
+      # qr.make(fit=True)
+   #    img = qr.make_image(fill='black', back_color='white')
+   #    buffer = BytesIO()
+  #     img.save(buffer, format="PNG")
+    #   img_file = File(buffer, name=f'{self.student_id}_qr.png')
+   #    self.qr_code.save(img_file.name, img_file, save=False)
 
     def save(self, *args, **kwargs):
         if not self.student_id:
             self.student_id = self.generate_student_id()
-        self.generate_qr_code()
+    #   self.generate_qr_code()
         super().save(*args, **kwargs)
 
     def generate_student_id(self):

@@ -71,6 +71,8 @@ class Redemption(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     reward = models.ForeignKey('Reward', on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+    redeemed_at = models.DateTimeField(null=True, blank=True)  # Add this if it should exist
+
 
     def save(self, *args, **kwargs):
         # Remove transaction creation from here
@@ -93,3 +95,6 @@ class Redemption(models.Model):
 
     def __str__(self):
         return f"{self.student.first_name} redeemed {self.reward.name} on {self.redeemed_at}"
+
+    def __str__(self):
+        return f'Redeemed at: {self.redeemed_at}' if self.redeemed_at else 'Not redeemed yet'

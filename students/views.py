@@ -338,9 +338,13 @@ def class_list(request):
 
     total_school_techbucks = Student.objects.aggregate(total_techbucks=Sum('transactions__amount'))['total_techbucks'] or 0
 
+    homerooms = Student.objects.values_list('homeroom', flat=True).distinct()
+
+
     context = {
         'classes_with_teachers': classes_with_teachers,
-        'total_school_techbucks': total_school_techbucks
+        'total_school_techbucks': total_school_techbucks,
+        'homerooms': homerooms,
     }
 
     return render(request, 'students/class_list.html', context)
